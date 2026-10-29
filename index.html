@@ -69,6 +69,8 @@ footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:
     <div class="controls">
       <button class="smallbtn" id="restart">最初からやり直す</button>
       <button class="smallbtn" id="sound" aria-pressed="false">効果音：OFF</button>
+      <button class="smallbtn" id="bgmToggle" aria-pressed="false">♪ BGMを再生</button>
+      <label class="smallbtn" style="display:flex;align-items:center;gap:8px">音量 <input id="bgmVolume" type="range" min="0" max="0.25" step="0.01" value="0.08" aria-label="BGM音量" style="width:90px"></label>
     </div>
   </section>
 </main>
@@ -135,6 +137,33 @@ const endings = {
   bad2:{label:"BAD END",title:"閉じ込められた真実",bg:"https://images.unsplash.com/photo-1511818966892-d7d671e672a2?auto=format&fit=crop&w=1800&q=85",text:"大きな音が館じゅうに響き、すべての扉が閉じた。最後に見えたのは、壁に刻まれた『次はあなたが番人だ』という文字だった。",kind:"バッドエンド"}
 };
 let step=0, score=0, inventory=[], flags={}, soundOn=false, finished=false;
+// オリジナルの環境BGM：Web Audioで生成するため、音声ファイルの追加は不要です。
+let bgmContext=null, bgmMaster=null, bgmNodes=[], bgmTimer=null, bgmPlaying=false, bgmNote=0;
+const bgmNotes=[110,130.81,146.83,98,123.47,146.83,110,82.41];
+function startBgm(){
+  const AudioCtx=window.AudioContext||window.webkitAudioContext;
+  if(!AudioCtx){alert("このブラウザではBGMを再生できません。");return;}
+  if(!bgmContext){
+    bgmContext=new AudioCtx();bgmMaster=bgmContext.createGain();bgmMaster.gain.value=Number($("bgmVolume").value);bgmMaster.connect(bgmContext.destination);
+    // 低い持続音とゆっくり変化する旋律で、洋館風の不穏な雰囲気を作ります。
+    const drone=bgmContext.createOscillator(), droneGain=bgmContext.createGain(), filter=bgmContext.createBiquadFilter();
+    drone.type="sine";drone.frequency.value=55;droneGain.gain.value=0.18;filter.type="lowpass";filter.frequency.value=180;
+    drone.connect(filter);filter.connect(droneGain);droneGain.connect(bgmMaster);drone.start();bgmNodes.push(drone,droneGain,filter);
+  }
+  bgmContext.resume();bgmPlaying=true;$("bgmToggle").textContent="Ⅱ BGMを停止";$("bgmToggle").setAttribute("aria-pressed","true");
+  if(bgmTimer)clearInterval(bgmTimer);
+  playBgmNote();bgmTimer=setInterval(playBgmNote,2200);
+}
+function playBgmNote(){
+  if(!bgmContext||!bgmPlaying)return;
+  const now=bgmContext.currentTime, freq=bgmNotes[bgmNote++%bgmNotes.length];
+  const osc=bgmContext.createOscillator(), gain=bgmContext.createGain(), filter=bgmContext.createBiquadFilter();
+  osc.type="triangle";osc.frequency.setValueAtTime(freq,now);filter.type="lowpass";filter.frequency.value=520;
+  gain.gain.setValueAtTime(0.0001,now);gain.gain.exponentialRampToValueAtTime(0.10,now+0.5);gain.gain.exponentialRampToValueAtTime(0.0001,now+2.0);
+  osc.connect(filter);filter.connect(gain);gain.connect(bgmMaster);osc.start(now);osc.stop(now+2.1);
+}
+function stopBgm(){bgmPlaying=false;if(bgmTimer){clearInterval(bgmTimer);bgmTimer=null;}if(bgmContext)bgmContext.suspend();$("bgmToggle").textContent="♪ BGMを再生";$("bgmToggle").setAttribute("aria-pressed","false");}
+
 const $=id=>document.getElementById(id);
 function setBg(url){$("sceneBg").style.backgroundImage=`url("${url}")`;}
 function renderProgress(){ $("progress").innerHTML=Array.from({length:5},(_,i)=>`<span class="dot ${i<step?"done":""}"></span>`).join("");}
@@ -182,6 +211,8 @@ function showEnding(){
 function resetGame(){step=0;score=0;inventory=[];flags={};finished=false;renderScene();}
 
 $("restart").onclick=resetGame;
+$("bgmToggle").onclick=()=>bgmPlaying?stopBgm():startBgm();
+$("bgmVolume").oninput=()=>{if(bgmMaster)bgmMaster.gain.setTargetAtTime(Number($("bgmVolume").value),bgmContext.currentTime,0.08);};
 $("sound").onclick=()=>{soundOn=!soundOn;$("sound").textContent="効果音："+(soundOn?"ON":"OFF");$("sound").setAttribute("aria-pressed",String(soundOn));};
 setBg("https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1800&q=85");
 renderScene();

@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>午前零時の脱出 | 2択RPG</title>
+<style>
+:root{--gold:#e9c77a;--panel:rgba(7,12,20,.82);--line:rgba(255,255,255,.18)}
+*{box-sizing:border-box}
+body{margin:0;background:#080d14;color:#f5f1e8;font-family:system-ui,-apple-system,"Yu Gothic",Meiryo,sans-serif;min-height:100vh}
+button{font:inherit}
+.shell{max-width:1100px;margin:auto;padding:22px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.brand{font-size:clamp(18px,3vw,26px);font-weight:800;letter-spacing:.06em}
+.brand span{color:var(--gold)}
+.pill{border:1px solid #766747;color:#f5d995;border-radius:999px;padding:6px 12px;font-size:12px;white-space:nowrap}
+.game{position:relative;min-height:610px;border:1px solid #4c5664;border-radius:18px;overflow:hidden;background:#1a2530;box-shadow:0 20px 70px #0009}
+.scene-bg{position:absolute;inset:0;background-size:cover;background-position:center;transition:background-image .3s ease}
+.scene-bg:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.12) 35%,rgba(0,0,0,.82) 100%)}
+.topline{position:absolute;z-index:1;top:18px;left:18px;right:18px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.chapter{background:#05090dcc;border:1px solid var(--line);padding:8px 12px;border-radius:9px;font-size:13px}
+.progress{display:flex;gap:5px}
+.dot{width:20px;height:5px;border-radius:4px;background:#ffffff50}
+.dot.done{background:var(--gold)}
+.content{position:absolute;z-index:1;left:0;right:0;bottom:0;padding:clamp(18px,4vw,38px)}
+.kicker{color:var(--gold);font-size:12px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px}
+h1{font-size:clamp(28px,5vw,46px);line-height:1.2;margin:0 0 14px}
+.story{font-size:clamp(15px,2vw,18px);line-height:1.9;white-space:pre-line;max-width:780px;color:#f7f4ed}
+.prompt{font-weight:750;margin:18px 0 12px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.choice{border:1px solid #ffffff40;border-radius:12px;background:linear-gradient(135deg,#1c2b3beF,#0b111beF);color:#fff;text-align:left;padding:16px;cursor:pointer;min-height:76px;transition:.15s}
+.choice:hover,.choice:focus-visible{border-color:var(--gold);transform:translateY(-2px);outline:none;background:#27384b}
+.choice b{display:block;color:var(--gold);font-size:12px;margin-bottom:5px}
+.choice span{font-weight:700}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.smallbtn{background:#ffffff12;color:#eee;border:1px solid #ffffff30;padding:9px 13px;border-radius:9px;cursor:pointer}
+.smallbtn:hover{background:#ffffff22}
+.inventory{font-size:13px;color:#ddd8ca;margin-top:14px}
+.inventory strong{color:var(--gold)}
+footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#9da8b5;font-size:12px;margin:13px 2px}
+.notice{color:#c8d0db}
+@media(max-width:650px){.shell{padding:10px}.game{min-height:690px}.choices{grid-template-columns:1fr}.choice{min-height:62px;padding:13px}.topline{top:12px;left:12px;right:12px}.content{padding:18px}.chapter{font-size:11px}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header>
+  <div class="brand">MIDNIGHT <span>ESCAPE</span></div>
+  <div class="pill">2択 × 5回 · 謎解きアドベンチャー</div>
+</header>
+<main class="game" aria-live="polite">
+  <div class="scene-bg" id="sceneBg"></div>
+  <div class="topline">
+    <div class="chapter" id="chapter">PROLOGUE</div>
+    <div class="progress" id="progress" aria-label="進行状況"></div>
+  </div>
+  <section class="content">
+    <div class="kicker" id="kicker">A STORY OF FIVE CHOICES</div>
+    <h1 id="title">午前零時の脱出</h1>
+    <div class="story" id="story">目を覚ますと、見知らぬ洋館の一室にいた。
+窓の外は深い霧。扉には古い錠前がかかっている。
+ここから脱出するには、5回の選択を乗り越えなければならない。</div>
+    <div class="prompt" id="prompt">どうする？</div>
+    <div class="choices" id="choices">
+      <button class="choice" data-start="true"><b>CHOICE 01</b><span>探索を始める</span></button>
+      <button class="choice" data-start="true"><b>CHOICE 02</b><span>しばらく様子を見る</span></button>
+    </div>
+    <div class="inventory" id="inventory">所持品：<strong>なし</strong></div>
+    <div class="controls">
+      <button class="smallbtn" id="restart">最初からやり直す</button>
+      <button class="smallbtn" id="sound" aria-pressed="false">効果音：OFF</button>
+      <button class="smallbtn" id="bgmToggle" aria-pressed="false">♪ BGMを再生</button>
+      <label class="smallbtn" style="display:flex;align-items:center;gap:8px">音量 <input id="bgmVolume" type="range" min="0" max="0.25" step="0.01" value="0.08" aria-label="BGM音量" style="width:90px"></label>
+    </div>
+  </section>
+</main>
+<footer><span>※背景画像の表示にはインターネット接続が必要です。</span><span class="notice">選択は記録され、最後にエンディングが決まります。</span></footer>
+</div>
+<script>
+const scenes = [
+  {
+    chapter:"第1章 · 見知らぬ部屋", kicker:"THE LOCKED ROOM",
+    title:"目覚め", bg:"https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1800&q=85",
+    story:"目を覚ますと、古びた寝室にいた。窓は固く閉じ、廊下から時計の音が聞こえる。ベッド脇の机と、重い扉が目に入った。",
+    prompt:"最初に何をする？",
+    choices:[
+      {label:"机の引き出しを調べる",desc:"小さな手がかりを探す",score:1,item:"真鍮の鍵",flag:"key"},
+      {label:"扉を力いっぱい開ける",desc:"力ずくで脱出を試みる",score:-1,flag:"noise"}
+    ]
+  },
+  {
+    chapter:"第2章 · 書き残されたもの", kicker:"A HIDDEN MESSAGE",
+    title:"古いメモ", bg:"https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1800&q=85",
+    story:"机の奥から、黄ばんだメモが見つかった。そこには『三つの鐘が鳴る前に、月の数字を読め』と書かれている。窓辺のカレンダーには、赤い丸が三つついていた。",
+    prompt:"メモの意味をどう考える？",
+    choices:[
+      {label:"カレンダーの赤い数字を確認する",desc:"数字を手がかりとして覚える",score:2,item:"暗号の数字",flag:"code"},
+      {label:"メモを破って捨てる",desc:"不気味なので忘れることにする",score:-2,flag:"torn"}
+    ]
+  },
+  {
+    chapter:"第3章 · 鍵のかかった扉", kicker:"THE IRON DOOR",
+    title:"地下への階段", bg:"https://images.unsplash.com/photo-1511818966892-d7d671e672a2?auto=format&fit=crop&w=1800&q=85",
+    story:"廊下の先に、地下へ続く扉があった。錠前には数字を入れる小さな窓がある。奥から風の音がするが、階段は暗闇に沈んでいる。",
+    prompt:"どうやって扉を開ける？",
+    choices:[
+      {label:"見つけた数字を錠前に入力する",desc:"手がかりを使って解錠する",score:2,requires:"code",flag:"unlocked"},
+      {label:"錠前を壊そうとする",desc:"大きな音を立てて突破する",score:-2,flag:"alarm"}
+    ]
+  },
+  {
+    chapter:"第4章 · 地下の秘密", kicker:"THE LAST CLUE",
+    title:"番人の部屋", bg:"https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1800&q=85",
+    story:"地下室には古いランタンと、外につながるらしい鉄格子があった。壁には『光は真実を示す』と刻まれている。ランタンのそばには、細い針金が落ちている。",
+    prompt:"最後の準備をするなら？",
+    choices:[
+      {label:"ランタンで壁を照らす",desc:"光に浮かぶ印を探す",score:2,flag:"light"},
+      {label:"針金で鉄格子をこじ開ける",desc:"急いで出口をこじ開ける",score:0,flag:"wire"}
+    ]
+  },
+  {
+    chapter:"第5章 · 最後の選択", kicker:"THE FINAL CHOICE",
+    title:"夜明けの出口", bg:"https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1800&q=85",
+    story:"かすかな朝日が差し込んでいる。出口の向こうには自由があるかもしれない。しかし背後から、洋館の主の足音が近づいてくる。",
+    prompt:"最後に、どうする？",
+    choices:[
+      {label:"手がかりを信じて正しい出口を選ぶ",desc:"落ち着いて脱出を試みる",score:3,flag:"escape"},
+      {label:"足音から逃げるため暗闇へ走る",desc:"とにかく走り出す",score:-3,flag:"run"}
+    ]
+  }
+];
+const endings = {
+  happy:{label:"HAPPY END",title:"夜明けの向こうへ",bg:"https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1800&q=85",text:"最後の仕掛けが外れ、出口の扉が静かに開いた。あなたは夜明けの街へ踏み出す。集めた手がかりが、すべて一本の道につながったのだ。あなたは生還した。",kind:"ハッピーエンド"},
+  normal1:{label:"NORMAL END",title:"霧の中の生還",bg:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=85",text:"どうにか洋館の外へ出られた。しかし、なぜ閉じ込められたのかは分からない。ポケットには、あのメモの切れ端が残っていた。",kind:"ふつうエンド"},
+  normal2:{label:"NORMAL END",title:"閉ざされた門",bg:"https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=1800&q=85",text:"出口にはたどり着いたものの、門は開かなかった。夜明けまで身を隠し、助けを待つことにした。生きて帰れる可能性は残されている。",kind:"ふつうエンド"},
+  bad1:{label:"BAD END",title:"永遠の迷い道",bg:"https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1800&q=85",text:"暗い廊下を走り続けても、同じ時計の前に戻ってしまう。足音はもう聞こえない。代わりに、あなた自身の名前を呼ぶ声がした。",kind:"バッドエンド"},
+  bad2:{label:"BAD END",title:"閉じ込められた真実",bg:"https://images.unsplash.com/photo-1511818966892-d7d671e672a2?auto=format&fit=crop&w=1800&q=85",text:"大きな音が館じゅうに響き、すべての扉が閉じた。最後に見えたのは、壁に刻まれた『次はあなたが番人だ』という文字だった。",kind:"バッドエンド"}
+};
+let step=0, score=0, inventory=[], flags={}, soundOn=false, finished=false;
+// オリジナルの環境BGM：Web Audioで生成するため、音声ファイルの追加は不要です。
+let bgmContext=null, bgmMaster=null, bgmNodes=[], bgmTimer=null, bgmPlaying=false, bgmNote=0;
+const bgmNotes=[110,130.81,146.83,98,123.47,146.83,110,82.41];
+function startBgm(){
+  const AudioCtx=window.AudioContext||window.webkitAudioContext;
+  if(!AudioCtx){alert("このブラウザではBGMを再生できません。");return;}
+  if(!bgmContext){
+    bgmContext=new AudioCtx();bgmMaster=bgmContext.createGain();bgmMaster.gain.value=Number($("bgmVolume").value);bgmMaster.connect(bgmContext.destination);
+    // 低い持続音とゆっくり変化する旋律で、洋館風の不穏な雰囲気を作ります。
+    const drone=bgmContext.createOscillator(), droneGain=bgmContext.createGain(), filter=bgmContext.createBiquadFilter();
+    drone.type="sine";drone.frequency.value=55;droneGain.gain.value=0.18;filter.type="lowpass";filter.frequency.value=180;
+    drone.connect(filter);filter.connect(droneGain);droneGain.connect(bgmMaster);drone.start();bgmNodes.push(drone,droneGain,filter);
+  }
+  bgmContext.resume();bgmPlaying=true;$("bgmToggle").textContent="Ⅱ BGMを停止";$("bgmToggle").setAttribute("aria-pressed","true");
+  if(bgmTimer)clearInterval(bgmTimer);
+  playBgmNote();bgmTimer=setInterval(playBgmNote,2200);
+}
+function playBgmNote(){
+  if(!bgmContext||!bgmPlaying)return;
+  const now=bgmContext.currentTime, freq=bgmNotes[bgmNote++%bgmNotes.length];
+  const osc=bgmContext.createOscillator(), gain=bgmContext.createGain(), filter=bgmContext.createBiquadFilter();
+  osc.type="triangle";osc.frequency.setValueAtTime(freq,now);filter.type="lowpass";filter.frequency.value=520;
+  gain.gain.setValueAtTime(0.0001,now);gain.gain.exponentialRampToValueAtTime(0.10,now+0.5);gain.gain.exponentialRampToValueAtTime(0.0001,now+2.0);
+  osc.connect(filter);filter.connect(gain);gain.connect(bgmMaster);osc.start(now);osc.stop(now+2.1);
+}
+function stopBgm(){bgmPlaying=false;if(bgmTimer){clearInterval(bgmTimer);bgmTimer=null;}if(bgmContext)bgmContext.suspend();$("bgmToggle").textContent="♪ BGMを再生";$("bgmToggle").setAttribute("aria-pressed","false");}
+
+const $=id=>document.getElementById(id);
+function setBg(url){$("sceneBg").style.backgroundImage=`url("${url}")`;}
+function renderProgress(){ $("progress").innerHTML=Array.from({length:5},(_,i)=>`<span class="dot ${i<step?"done":""}"></span>`).join("");}
+function renderInventory(){ $("inventory").innerHTML="所持品：<strong>"+(inventory.length?inventory.join("、"):"なし")+"</strong>";}
+function renderScene(){
+  const s=scenes[step]; setBg(s.bg); $("chapter").textContent=s.chapter; $("kicker").textContent=s.kicker;
+  $("title").textContent=s.title; $("story").textContent=s.story; $("prompt").textContent=s.prompt;
+  $("choices").innerHTML="";
+  s.choices.forEach((c,i)=>{
+    const b=document.createElement("button");b.className="choice";
+    b.innerHTML=`<b>CHOICE 0${i+1}</b><span>${c.label}</span><div style="font-size:12px;color:#c8d0db;margin-top:5px">${c.desc}</div>`;
+    b.onclick=()=>choose(c);$("choices").appendChild(b);
+  });
+  renderProgress();renderInventory();
+}
+function choose(c){
+  if(finished)return;
+  if(c.requires && !flags[c.requires]){
+    score-=1;
+    alert("数字の手がかりがない。錠前は開かず、時間だけが過ぎていった。");
+  }else{
+    score+=c.score;
+    if(c.item && !inventory.includes(c.item))inventory.push(c.item);
+    if(c.flag)flags[c.flag]=true;
+  }
+  step++;
+  if(soundOn){try{const a=new AudioContext(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=440;g.gain.value=.035;o.start();o.stop(a.currentTime+.08);}catch(e){}}
+  if(step>=5)showEnding();else renderScene();
+}
+function showEnding(){
+  finished=true;
+  const prepared=inventory.includes("暗号の数字") && flags.unlocked && flags.light && flags.escape && score>=7;
+  let key;
+  if(prepared) key="happy";
+  else if(score>=2) key=Math.random()<.5?"normal1":"normal2";
+  else if(score>=-2) key=Math.random()<.5?"normal1":"bad1";
+  else key=Math.random()<.5?"bad1":"bad2";
+  const e=endings[key];setBg(e.bg);$("chapter").textContent=e.label;$("kicker").textContent="YOUR ENDING";
+  $("title").textContent=e.title;$("story").textContent=e.text;$("prompt").textContent=e.kind+" · スコア："+score;
+  $("choices").innerHTML=`<button class="choice" id="again"><b>RESTART</b><span>もう一度プレイする</span></button><button class="choice" id="share"><b>SHARE</b><span>結果をコピーする</span></button>`;
+  $("again").onclick=resetGame;
+  $("share").onclick=async()=>{const t=`「午前零時の脱出」結果：${e.kind}「${e.title}」`;try{await navigator.clipboard.writeText(t);alert("結果をコピーしました！");}catch(err){prompt("この結果をコピーしてください",t);}};
+  renderProgress();renderInventory();$("progress").innerHTML=Array.from({length:5},()=>'<span class="dot done"></span>').join("");
+}
+function resetGame(){step=0;score=0;inventory=[];flags={};finished=false;renderScene();}
+
+$("restart").onclick=resetGame;
+$("bgmToggle").onclick=()=>bgmPlaying?stopBgm():startBgm();
+$("bgmVolume").oninput=()=>{if(bgmMaster)bgmMaster.gain.setTargetAtTime(Number($("bgmVolume").value),bgmContext.currentTime,0.08);};
+$("sound").onclick=()=>{soundOn=!soundOn;$("sound").textContent="効果音："+(soundOn?"ON":"OFF");$("sound").setAttribute("aria-pressed",String(soundOn));};
+setBg("https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1800&q=85");
+renderScene();
+</script>
+</body>
+</html>
